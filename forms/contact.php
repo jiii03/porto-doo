@@ -1,33 +1,41 @@
 <?php
-  $receiving_email_address = 'muhammadpanjidd@gmail.com';
+use PHPMailer\PHPMailer\PHPMailer;
+use PHPMailer\PHPMailer\Exception;
 
-  if( file_exists($php_email_form = '../assets/vendor/php-email-form/php-email-form.php' )) {
-    include( $php_email_form );
-  } else {
-    die( 'Unable to load the "PHP Email Form" Library!');
-  }
+require 'vendor/autoload.php';
 
-  $contact = new PHP_Email_Form;
-  $contact->ajax = true;
-  
-  $contact->to = $receiving_email_address;
-  $contact->from_name = $_POST['name'];
-  $contact->from_email = $_POST['email'];
-  $contact->subject = $_POST['subject'];
+if ($_SERVER["REQUEST_METHOD"] === "POST") {
+    $name = htmlspecialchars($_POST['name']);
+    $email = filter_var($_POST['email'], FILTER_VALIDATE_EMAIL);
+    $message = htmlspecialchars($_POST['message']);
 
-  // Uncomment below code if you want to use SMTP to send emails. You need to enter your correct SMTP credentials
-  /*
-  $contact->smtp = array(
-    'host' => 'example.com',
-    'username' => 'example',
-    'password' => 'pass',
-    'port' => '587'
-  );
-  */
+    if (!$email) {
+        echo "Invalid email address.";
+        exit;
+    }
 
-  $contact->add_message( $_POST['name'], 'From');
-  $contact->add_message( $_POST['email'], 'Email');
-  $contact->add_message( $_POST['message'], 'Message', 10);
+    $mail = new PHPMailer(true);
 
-  echo $contact->send();
+    try {
+        $mail->isSMTP();
+        $mail->Host = 'smtp.gmail.com';
+        $mail->SMTPAuth = true;
+        $mail->Username = 'muhammadpanjiddd@gmail.com';
+        $mail->Password = 'PanjiGanteng'; // Ganti dengan password Gmail atau App Password
+        $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+        $mail->Port = 587;
+
+        $mail->setFrom($email, $name);
+        $mail->addAddress('your-email@gmail.com'); // Ganti dengan email tujuan
+        $mail->Subject = "New Contact Form Submission from $name";
+        $mail->Body = "You have received a new message from $name ($email):\n\n$message";
+
+        $mail->send();
+        echo "Message sent successfully!";
+    } catch (Exception $e) {
+        echo "Failed to send the message. Error: {$mail->ErrorInfo}";
+    }
+} else {
+    echo "Invalid request method.";
+}
 ?>
